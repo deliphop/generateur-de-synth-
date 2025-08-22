@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Synthé pour le GIH</title></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0061ff 0%, #60efff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: #1a1a1a;
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 16px;
+            height: fit-content;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0061ff;
+            box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+        }
+
+        .picto-upload {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .picto-preview {
+            width: 60px;
+            height: 60px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            overflow: hidden;
+        }
+
+        .picto-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .file-input-wrapper {
+            flex: 1;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .file-input-label:hover {
+            background: #f0f0f0;
+            border-color: #0061ff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .style-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .preview-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 16px;
+        }
+
+        .canvas-container {
+            background: repeating-conic-gradient(#f0f0f0 0% 25%, #ffffff 0% 50%) 50% / 20px 20px;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .speakers-list {
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .speaker-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .speaker-item:hover {
+            background: #e8f0ff;
+            transform: translateX(5px);
+        }
+
+        .speaker-item.active {
+            background: linear-gradient(135deg, #0061ff 0%, #60efff 100%);
+            color: white;
+        }
+
+        .speaker-info {
+            flex: 1;
+        }
+
+        .speaker-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .speaker-title {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .speaker-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #ff4444;
+            color: white;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0061ff 0%, #0050dd 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 97, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f0;
+            border-color: #0061ff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00d084 0%, #00a06a 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 208, 132, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .multi-speaker-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .multi-speaker-item h4 {
+            color: #0061ff;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .multi-speaker-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .multi-speaker-row.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .multi-speaker-picto {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .multi-speaker-picto img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker-group input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span style="font-size: 40px;">🎤</span>
+            Générateur de Synthé pour le GIH
+        </h1>
+        <p class="subtitle">Créez des cartes de présentation professionnelles pour vos intervenants</p>
+
+        <div class="main-grid">
+            <div class="form-section">
+                <div class="input-group">
+                    <label for="speakersPerPage">Nombre de speakers par page</label>
+                    <select id="speakersPerPage">
+                        <option value="1" selected>1 speaker</option>
+                        <option value="2">2 speakers</option>
+                        <option value="3">3 speakers</option>
+                        <option value="4">4 speakers</option>
+                        <option value="5">5 speakers</option>
+                        <option value="6">6 speakers</option>
+                    </select>
+                </div>
+
+                <h2 class="form-title">📝 Informations du Speaker</h2>
+                
+                <div class="input-group">
+                    <label for="civilite">Civilité, Nom et Prénom</label>
+                    <input type="text" id="civilite" placeholder="Ex: Dr. Marie DUPONT">
+                </div>
+
+                <div class="input-group">
+                    <label for="titre1">Titre / Fonction (ligne 1)</label>
+                    <input type="text" id="titre1" placeholder="Ex: Directrice de Recherche">
+                </div>
+
+                <div class="input-group">
+                    <label for="titre2">Titre / Fonction (ligne 2 - optionnel)</label>
+                    <input type="text" id="titre2" placeholder="Ex: Institut National de la Santé">
+                </div>
+
+                <div class="input-group">
+                    <label>Picto / Logo (optionnel)</label>
+                    <div class="picto-upload">
+                        <div class="picto-preview" id="pictoPreview">
+                            <span style="color: #ccc;">📷</span>
+                        </div>
+                        <div class="file-input-wrapper">
+                            <label for="pictoInput" class="file-input-label">
+                                Choisir une image
+                            </label>
+                            <input type="file" id="pictoInput" accept="image/*">
+                            <small style="display: block; margin-top: 5px; color: #999;">PNG, JPG, SVG (max 2MB)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-success" onclick="addSpeaker()">
+                        <span>➕</span> Ajouter ce speaker
+                    </button>
+                    <button class="btn-secondary" onclick="clearForm()">
+                        <span>🔄</span> Réinitialiser
+                    </button>
+                </div>
+
+                <div class="style-section">
+                    <h3 class="form-title">🎨 Personnalisation</h3>
+                    
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="fontSize">Taille nom</label>
+                            <input type="number" id="fontSize" value="60" min="10" max="100">
+                        </div>
+                        <div class="input-group">
+                            <label for="titleSize">Taille titre</label>
+                            <input type="number" id="titleSize" value="50" min="10" max="100">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="fontFamily">Police du nom</label>
+                            <select id="fontFamily">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="customName" id="customFontOption" style="display: none;">Police personnalisée nom</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="titleFontFamily">Police du titre</label>
+                            <select id="titleFontFamily">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="customTitle" id="customTitleFontOption" style="display: none;">Police personnalisée titre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Police personnalisée pour le NOM (TTF, OTF, WOFF)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="fontUpload" class="file-input-label" style="margin: 0;">
+                                Charger police nom
+                            </label>
+                            <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display: none;">
+                            <span id="fontStatus" style="color: #999; font-size: 13px;">Aucune police chargée</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Police personnalisée pour le TITRE (TTF, OTF, WOFF)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="titleFontUpload" class="file-input-label" style="margin: 0;">
+                                Charger police titre
+                            </label>
+                            <input type="file" id="titleFontUpload" accept=".ttf,.otf,.woff,.woff2" style="display: none;">
+                            <span id="titleFontStatus" style="color: #999; font-size: 13px;">Aucune police chargée</span>
+                        </div>
+                        <small style="display: block; margin-top: 5px; color: #999;">
+                            Vous pouvez utiliser des polices différentes pour le nom et le titre (ex: Gotham Bold pour le nom, Gotham Light pour le titre)
+                        </small>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="alignment">Alignement</label>
+                            <select id="alignment">
+                                <option value="left">Gauche</option>
+                                <option value="center">Centré</option>
+                                <option value="right">Droite</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <!-- Espace réservé pour garder l'alignement -->
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Couleur nom</label>
+                            <div class="color-picker-group">
+                                <input type="color" id="nameColor" value="#ffffff">
+                                <input type="text" value="#ffffff" oninput="document.getElementById('nameColor').value=this.value">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Couleur titre</label>
+                            <div class="color-picker-group">
+                                <input type="color" id="titleColor" value="#ffffff">
+                                <input type="text" value="#ffffff" oninput="document.getElementById('titleColor').value=this.value">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Fond transparent</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="transparentBg" checked style="width: auto; margin: 0;">
+                                <label for="transparentBg" style="margin: 0; cursor: pointer;">Activer la transparence</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Couleur de fond (si non transparent)</label>
+                            <div class="color-picker-group">
+                                <input type="color" id="bgColor" value="#ffffff" disabled>
+                                <input type="text" value="#ffffff" id="bgColorText" disabled oninput="document.getElementById('bgColor').value=this.value">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="pictoSize">Taille picto (px)</label>
+                            <input type="number" id="pictoSize" value="100" min="20" max="200">
+                        </div>
+                        <div class="input-group">
+                            <label for="shadowEffect">Ombre portée (pour lisibilité LED)</label>
+                            <select id="shadowEffect">
+                                <option value="none">Aucune</option>
+                                <option value="light">Légère</option>
+                                <option value="medium" selected>Moyenne</option>
+                                <option value="strong">Forte</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="canvasWidth">Largeur (px)</label>
+                            <input type="number" id="canvasWidth" value="2000" min="400" max="4000">
+                        </div>
+                        <div class="input-group">
+                            <label for="canvasHeight">Hauteur par speaker (px)</label>
+                            <input type="number" id="canvasHeight" value="200" min="100" max="1000">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="spacing">Espacement entre speakers (px)</label>
+                            <input type="number" id="spacing" value="10" min="0" max="100">
+                        </div>
+                        <div class="input-group">
+                            <!-- Espace réservé -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <h2 class="form-title">👁️ Aperçu</h2>
+                
+                <div class="canvas-container">
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-primary" onclick="downloadCurrent()">
+                        <span>💾</span> Télécharger cette carte
+                    </button>
+                    <button class="btn-primary" onclick="downloadAll()">
+                        <span>📦</span> Télécharger tout (ZIP)
+                    </button>
+                    <button class="btn-secondary" onclick="downloadGrouped()">
+                        <span>📄</span> Télécharger par groupes
+                    </button>
+                </div>
+
+                <div id="multiSpeakerEdit" style="display: none; margin-top: 30px;">
+                    <h3 class="form-title">✏️ Édition rapide multi-speakers</h3>
+                    <div id="multiSpeakerFields"></div>
+                </div>
+
+                <div class="speakers-list" id="speakersList">
+                    <h3 class="form-title">📋 Liste des speakers</h3>
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        <p>Aucun speaker ajouté</p>
+                        <small>Remplissez le formulaire et cliquez sur "Ajouter"</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        let speakers = [];
+        let currentSpeakerIndex = -1;
+        let currentPicto = null;
+        let customFont = null;
+        let customFontName = 'CustomFont';
+        let customTitleFont = null;
+        let customTitleFontName = 'CustomTitleFont';
+        let defaultPicto = null;
+
+        // Configuration des fichiers locaux
+        // Modifiez ces noms selon vos fichiers
+        const LOCAL_NAME_FONT = 'Gotham-Bold.otf';  // Police pour les noms
+        const LOCAL_TITLE_FONT = 'Gotham-Light.otf'; // Police pour les titres
+        const LOCAL_DEFAULT_PICTO = 'logo.png';     // Picto par défaut
+
+        // IMPORTANT : Pour éviter les erreurs CORS, utilisez l'une de ces solutions :
+        // 1. Serveur local : Ouvrez le fichier via un serveur local (ex: Live Server dans VS Code)
+        // 2. Upload manuel : Utilisez le bouton "Choisir une image" pour charger le logo
+        // 3. Ligne de commande : python -m http.server 8000 (puis ouvrir localhost:8000)
+
+        // Charger automatiquement les polices locales au démarrage
+        async function loadLocalFonts() {
+            try {
+                // Charger la police pour les noms
+                const nameFontUrl = `./${LOCAL_NAME_FONT}`;
+                const nameStyle = document.createElement('style');
+                nameStyle.id = 'localNameFontStyle';
+                nameStyle.textContent = `
+                    @font-face {
+                        font-family: 'LocalNameFont';
+                        src: url('${nameFontUrl}') format('opentype');
+                        font-weight: normal;
+                        font-style: normal;
+                    }
+                    @font-face {
+                        font-family: 'LocalNameFont';
+                        src: url('${nameFontUrl}') format('opentype');
+                        font-weight: bold;
+                        font-style: normal;
+                    }
+                    @font-face {
+                        font-family: 'LocalNameFont';
+                        src: url('${nameFontUrl}') format('opentype');
+                        font-weight: 700;
+                        font-style: normal;
+                    }
+                `;
+                document.head.appendChild(nameStyle);
+                
+                // Charger la police pour les titres
+                const titleFontUrl = `./${LOCAL_TITLE_FONT}`;
+                const titleStyle = document.createElement('style');
+                titleStyle.id = 'localTitleFontStyle';
+                titleStyle.textContent = `
+                    @font-face {
+                        font-family: 'LocalTitleFont';
+                        src: url('${titleFontUrl}') format('opentype');
+                        font-weight: normal;
+                        font-style: normal;
+                    }
+                    @font-face {
+                        font-family: 'LocalTitleFont';
+                        src: url('${titleFontUrl}') format('opentype');
+                        font-weight: 400;
+                        font-style: normal;
+                    }
+                `;
+                document.head.appendChild(titleStyle);
+                
+                // Attendre que les polices soient chargées
+                await document.fonts.load('700 60px "LocalNameFont"');
+                await document.fonts.load('400 50px "LocalTitleFont"');
+                
+                // Ajouter les options dans les selects
+                const nameFontOption = document.createElement('option');
+                nameFontOption.value = 'LocalNameFont';
+                nameFontOption.textContent = 'Gotham Bold (Local)';
+                nameFontOption.selected = true;
+                document.getElementById('fontFamily').insertBefore(nameFontOption, document.getElementById('fontFamily').firstChild);
+                
+                const titleFontOption = document.createElement('option');
+                titleFontOption.value = 'LocalTitleFont';
+                titleFontOption.textContent = 'Gotham Light (Local)';
+                titleFontOption.selected = true;
+                document.getElementById('titleFontFamily').insertBefore(titleFontOption, document.getElementById('titleFontFamily').firstChild);
+                
+                console.log('Polices locales chargées avec succès');
+            } catch (error) {
+                console.log('Polices locales non trouvées, utilisation des polices par défaut');
+            }
+        }
+
+        // Charger automatiquement le picto local par défaut
+        async function loadLocalPicto() {
+            try {
+                const pictoUrl = `./${LOCAL_DEFAULT_PICTO}`;
+                
+                // Convertir l'image locale en base64 pour éviter les problèmes CORS
+                const response = await fetch(pictoUrl);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    defaultPicto = e.target.result;
+                    currentPicto = e.target.result;
+                    document.getElementById('pictoPreview').innerHTML = `<img src="${e.target.result}" alt="Picto">`;
+                    console.log('Picto par défaut chargé');
+                    updatePreview();
+                };
+                
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                console.log('Picto local non trouvé ou erreur CORS - utilisez un serveur local ou uploadez manuellement');
+            }
+        }
+
+        // Charger les ressources locales au démarrage
+        window.addEventListener('DOMContentLoaded', async function() {
+            await loadLocalFonts();
+            await loadLocalPicto();
+            updatePreview();
+        });
+
+        // Ajouter les Google Fonts comme fallback
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Roboto:wght@400;500;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
+        // Gestion de l'upload de police personnalisée pour le NOM
+        document.getElementById('fontUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const fileName = file.name;
+            const fileExt = fileName.split('.').pop().toLowerCase();
+            
+            if (!['ttf', 'otf', 'woff', 'woff2'].includes(fileExt)) {
+                alert('Format de police non supporté. Utilisez TTF, OTF, WOFF ou WOFF2.');
+                return;
+            }
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const base64 = event.target.result;
+                    customFontName = 'CustomName_' + fileName.replace(/\.[^/.]+$/, "");
+                    
+                    const oldStyle = document.getElementById('customFontStyle');
+                    if (oldStyle) {
+                        oldStyle.remove();
+                    }
+                    
+                    const style = document.createElement('style');
+                    style.id = 'customFontStyle';
+                    style.textContent = `
+                        @font-face {
+                            font-family: '${customFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: normal;
+                            font-style: normal;
+                        }
+                        @font-face {
+                            font-family: '${customFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: bold;
+                            font-style: normal;
+                        }
+                        @font-face {
+                            font-family: '${customFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: 400;
+                            font-style: normal;
+                        }
+                        @font-face {
+                            font-family: '${customFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: 700;
+                            font-style: normal;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    customFont = customFontName;
+                    
+                    document.getElementById('fontStatus').textContent = `✓ ${fileName} chargée`;
+                    document.getElementById('fontStatus').style.color = '#00d084';
+                    
+                    const customOption = document.getElementById('customFontOption');
+                    customOption.textContent = fileName.replace(/\.[^/.]+$/, "");
+                    customOption.value = customFontName;
+                    customOption.style.display = 'block';
+                    
+                    document.getElementById('fontFamily').value = customFontName;
+                    
+                    await document.fonts.load(`700 36px "${customFontName}"`);
+                    
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement de la police:', error);
+                alert('Erreur lors du chargement de la police.');
+            }
+        });
+
+        // Gestion de l'upload de police personnalisée pour le TITRE
+        document.getElementById('titleFontUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const fileName = file.name;
+            const fileExt = fileName.split('.').pop().toLowerCase();
+            
+            if (!['ttf', 'otf', 'woff', 'woff2'].includes(fileExt)) {
+                alert('Format de police non supporté. Utilisez TTF, OTF, WOFF ou WOFF2.');
+                return;
+            }
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const base64 = event.target.result;
+                    customTitleFontName = 'CustomTitle_' + fileName.replace(/\.[^/.]+$/, "");
+                    
+                    const oldStyle = document.getElementById('customTitleFontStyle');
+                    if (oldStyle) {
+                        oldStyle.remove();
+                    }
+                    
+                    const style = document.createElement('style');
+                    style.id = 'customTitleFontStyle';
+                    style.textContent = `
+                        @font-face {
+                            font-family: '${customTitleFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: normal;
+                            font-style: normal;
+                        }
+                        @font-face {
+                            font-family: '${customTitleFontName}';
+                            src: url(${base64}) format('${fileExt === 'ttf' ? 'truetype' : fileExt === 'otf' ? 'opentype' : fileExt}');
+                            font-weight: 400;
+                            font-style: normal;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    customTitleFont = customTitleFontName;
+                    
+                    document.getElementById('titleFontStatus').textContent = `✓ ${fileName} chargée`;
+                    document.getElementById('titleFontStatus').style.color = '#00d084';
+                    
+                    const customOption = document.getElementById('customTitleFontOption');
+                    customOption.textContent = fileName.replace(/\.[^/.]+$/, "");
+                    customOption.value = customTitleFontName;
+                    customOption.style.display = 'block';
+                    
+                    document.getElementById('titleFontFamily').value = customTitleFontName;
+                    
+                    await document.fonts.load(`400 24px "${customTitleFontName}"`);
+                    
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement de la police:', error);
+                alert('Erreur lors du chargement de la police.');
+            }
+        });
+
+        document.getElementById('pictoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.size <= 2 * 1024 * 1024) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentPicto = event.target.result;
+                    document.getElementById('pictoPreview').innerHTML = `<img src="${currentPicto}" alt="Picto">`;
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            } else if (file) {
+                alert('Le fichier est trop volumineux. Maximum 2MB.');
+                e.target.value = '';
+            }
+        });
+
+        // Event listeners pour mise à jour en temps réel
+        ['civilite', 'titre1', 'titre2', 'fontSize', 'titleSize', 'fontFamily', 'titleFontFamily',
+         'nameColor', 'titleColor', 'bgColor', 'alignment', 'pictoSize',
+         'canvasWidth', 'canvasHeight', 'shadowEffect', 'spacing'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+            document.getElementById(id).addEventListener('change', updatePreview);
+        });
+
+        // Gestion du changement de nombre de speakers par page
+        document.getElementById('speakersPerPage').addEventListener('change', function() {
+            updateMultiSpeakerEdit();
+            updatePreview();
+        });
+
+        // Gestion de la transparence
+        document.getElementById('transparentBg').addEventListener('change', function() {
+            const isTransparent = this.checked;
+            document.getElementById('bgColor').disabled = isTransparent;
+            document.getElementById('bgColorText').disabled = isTransparent;
+            updatePreview();
+        });
+
+        function updateMultiSpeakerEdit() {
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            const multiEditDiv = document.getElementById('multiSpeakerEdit');
+            const fieldsDiv = document.getElementById('multiSpeakerFields');
+            
+            if (speakersPerPage > 1) {
+                multiEditDiv.style.display = 'block';
+                
+                // Déterminer quels speakers afficher
+                const startIndex = Math.floor(currentSpeakerIndex / speakersPerPage) * speakersPerPage;
+                let html = '';
+                
+                for (let i = 0; i < speakersPerPage; i++) {
+                    const speakerIndex = startIndex + i;
+                    const speaker = speakerIndex < speakers.length ? speakers[speakerIndex] : null;
+                    const speakerHeight = speaker && speaker.customHeight ? speaker.customHeight : document.getElementById('canvasHeight').value;
+                    
+                    html += `
+                        <div class="multi-speaker-item">
+                            <h4>
+                                <span style="background: linear-gradient(135deg, #0061ff 0%, #60efff 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                                    ${i + 1}
+                                </span>
+                                Speaker ${i + 1}
+                            </h4>
+                            <div class="multi-speaker-row full-width">
+                                <input type="text" 
+                                    id="multi-civilite-${i}" 
+                                    placeholder="Ex: Dr. Marie DUPONT"
+                                    value="${speaker ? speaker.civilite : ''}"
+                                    onchange="updateMultiSpeaker(${i})"
+                                    style="font-weight: 600;">
+                            </div>
+                            <div class="multi-speaker-row">
+                                <input type="text" 
+                                    id="multi-titre1-${i}" 
+                                    placeholder="Titre / Fonction (ligne 1)"
+                                    value="${speaker ? speaker.titre1 : ''}"
+                                    onchange="updateMultiSpeaker(${i})">
+                                <input type="text" 
+                                    id="multi-titre2-${i}" 
+                                    placeholder="Titre / Fonction (ligne 2)"
+                                    value="${speaker ? (speaker.titre2 || '') : ''}"
+                                    onchange="updateMultiSpeaker(${i})">
+                            </div>
+                            <div class="multi-speaker-row">
+                                <div class="multi-speaker-picto">
+                                    <label class="file-input-label" for="multi-picto-${i}" style="cursor: pointer;">
+                                        ${speaker && speaker.picto ? 'Changer le picto' : 'Ajouter un picto'}
+                                    </label>
+                                    <input type="file" 
+                                        id="multi-picto-${i}" 
+                                        accept="image/*"
+                                        style="display: none;"
+                                        onchange="updateMultiSpeakerPicto(${i}, this)">
+                                    <div id="multi-picto-preview-${i}" style="display: inline-block;">
+                                        ${speaker && speaker.picto ? `<img src="${speaker.picto}" alt="Picto">` : '<span style="color: #999;">Pas de picto</span>'}
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin: 0;">
+                                    <label for="multi-height-${i}" style="margin-bottom: 6px;">Hauteur (px)</label>
+                                    <input type="number" 
+                                        id="multi-height-${i}" 
+                                        value="${speakerHeight}"
+                                        min="100" 
+                                        max="1000"
+                                        onchange="updateMultiSpeakerHeight(${i})"
+                                        placeholder="200">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                fieldsDiv.innerHTML = html;
+            } else {
+                multiEditDiv.style.display = 'none';
+            }
+        }
+
+        function updateMultiSpeaker(index) {
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            const startIndex = Math.floor(currentSpeakerIndex / speakersPerPage) * speakersPerPage;
+            const speakerIndex = startIndex + index;
+            
+            const civilite = document.getElementById(`multi-civilite-${index}`).value;
+            const titre1 = document.getElementById(`multi-titre1-${index}`).value;
+            const titre2 = document.getElementById(`multi-titre2-${index}`).value;
+            
+            if (!civilite || !titre1) return;
+            
+            // Si le speaker n'existe pas encore, on le crée
+            while (speakers.length <= speakerIndex) {
+                speakers.push({
+                    civilite: `Speaker ${speakers.length + 1}`,
+                    titre1: 'Titre à définir',
+                    titre2: '',
+                    picto: null,
+                    settings: {
+                        fontSize: document.getElementById('fontSize').value,
+                        titleSize: document.getElementById('titleSize').value,
+                        fontFamily: document.getElementById('fontFamily').value,
+                        nameColor: document.getElementById('nameColor').value,
+                        titleColor: document.getElementById('titleColor').value,
+                        bgColor: document.getElementById('bgColor').value,
+                        transparentBg: document.getElementById('transparentBg').checked,
+                        alignment: document.getElementById('alignment').value,
+                        pictoSize: document.getElementById('pictoSize').value,
+                        shadowEffect: document.getElementById('shadowEffect').value,
+                        canvasWidth: document.getElementById('canvasWidth').value,
+                        canvasHeight: document.getElementById('canvasHeight').value,
+                        speakersPerPage: document.getElementById('speakersPerPage').value,
+                        spacing: document.getElementById('spacing').value
+                    }
+                });
+            }
+            
+            // Mettre à jour le speaker
+            speakers[speakerIndex].civilite = civilite;
+            speakers[speakerIndex].titre1 = titre1;
+            speakers[speakerIndex].titre2 = titre2;
+            
+            // Mettre à jour les paramètres de style pour ce speaker
+            speakers[speakerIndex].settings = {
+                fontSize: document.getElementById('fontSize').value,
+                titleSize: document.getElementById('titleSize').value,
+                fontFamily: document.getElementById('fontFamily').value,
+                nameColor: document.getElementById('nameColor').value,
+                titleColor: document.getElementById('titleColor').value,
+                bgColor: document.getElementById('bgColor').value,
+                transparentBg: document.getElementById('transparentBg').checked,
+                alignment: document.getElementById('alignment').value,
+                pictoSize: document.getElementById('pictoSize').value,
+                shadowEffect: document.getElementById('shadowEffect').value,
+                canvasWidth: document.getElementById('canvasWidth').value,
+                canvasHeight: document.getElementById('canvasHeight').value,
+                speakersPerPage: document.getElementById('speakersPerPage').value,
+                spacing: document.getElementById('spacing').value
+            };
+            
+            updateSpeakersList();
+            updatePreview();
+        }
+
+        function updateMultiSpeakerHeight(index) {
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            const startIndex = Math.floor(currentSpeakerIndex / speakersPerPage) * speakersPerPage;
+            const speakerIndex = startIndex + index;
+            
+            const height = document.getElementById(`multi-height-${index}`).value;
+            
+            // S'assurer que le speaker existe
+            while (speakers.length <= speakerIndex) {
+                speakers.push({
+                    civilite: document.getElementById(`multi-civilite-${index}`).value || `Speaker ${speakers.length + 1}`,
+                    titre1: document.getElementById(`multi-titre1-${index}`).value || 'Titre à définir',
+                    titre2: document.getElementById(`multi-titre2-${index}`).value || '',
+                    picto: null,
+                    customHeight: height,
+                    settings: {
+                        fontSize: document.getElementById('fontSize').value,
+                        titleSize: document.getElementById('titleSize').value,
+                        fontFamily: document.getElementById('fontFamily').value,
+                        titleFontFamily: document.getElementById('titleFontFamily').value,
+                        nameColor: document.getElementById('nameColor').value,
+                        titleColor: document.getElementById('titleColor').value,
+                        bgColor: document.getElementById('bgColor').value,
+                        transparentBg: document.getElementById('transparentBg').checked,
+                        alignment: document.getElementById('alignment').value,
+                        pictoSize: document.getElementById('pictoSize').value,
+                        shadowEffect: document.getElementById('shadowEffect').value,
+                        canvasWidth: document.getElementById('canvasWidth').value,
+                        canvasHeight: height,
+                        speakersPerPage: document.getElementById('speakersPerPage').value,
+                        spacing: document.getElementById('spacing').value
+                    }
+                });
+            }
+            
+            // Mettre à jour la hauteur du speaker
+            speakers[speakerIndex].customHeight = height;
+            if (speakers[speakerIndex].settings) {
+                speakers[speakerIndex].settings.canvasHeight = height;
+            }
+            
+            updatePreview();
+        }
+
+        async function updateMultiSpeakerPicto(index, input) {
+            const file = input.files[0];
+            if (!file || file.size > 2 * 1024 * 1024) {
+                if (file) alert('Le fichier est trop volumineux. Maximum 2MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+                const startIndex = Math.floor(currentSpeakerIndex / speakersPerPage) * speakersPerPage;
+                const speakerIndex = startIndex + index;
+                
+                // S'assurer que le speaker existe
+                while (speakers.length <= speakerIndex) {
+                    speakers.push({
+                        civilite: document.getElementById(`multi-civilite-${index}`).value || `Speaker ${speakers.length + 1}`,
+                        titre1: document.getElementById(`multi-titre1-${index}`).value || 'Titre à définir',
+                        titre2: document.getElementById(`multi-titre2-${index}`).value || '',
+                        picto: null,
+                        settings: {
+                            fontSize: document.getElementById('fontSize').value,
+                            titleSize: document.getElementById('titleSize').value,
+                            fontFamily: document.getElementById('fontFamily').value,
+                            nameColor: document.getElementById('nameColor').value,
+                            titleColor: document.getElementById('titleColor').value,
+                            bgColor: document.getElementById('bgColor').value,
+                            transparentBg: document.getElementById('transparentBg').checked,
+                            alignment: document.getElementById('alignment').value,
+                            pictoSize: document.getElementById('pictoSize').value,
+                            shadowEffect: document.getElementById('shadowEffect').value,
+                            canvasWidth: document.getElementById('canvasWidth').value,
+                            canvasHeight: document.getElementById('canvasHeight').value,
+                            speakersPerPage: document.getElementById('speakersPerPage').value,
+                            spacing: document.getElementById('spacing').value
+                        }
+                    });
+                }
+                
+                speakers[speakerIndex].picto = event.target.result;
+                updateMultiSpeakerEdit();
+                updateSpeakersList();
+                await updatePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function updatePreview() {
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            
+            if (speakersPerPage === 1) {
+                // Mode single speaker
+                drawSingleSpeaker();
+            } else {
+                // Mode multi speakers
+                await drawMultipleSpeakers();
+            }
+        }
+
+        function drawSingleSpeaker() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const height = parseInt(document.getElementById('canvasHeight').value);
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Fond - transparent ou couleur
+            const isTransparent = document.getElementById('transparentBg').checked;
+            if (isTransparent) {
+                ctx.clearRect(0, 0, width, height);
+            } else {
+                ctx.fillStyle = document.getElementById('bgColor').value;
+                ctx.fillRect(0, 0, width, height);
+            }
+            
+            const alignment = document.getElementById('alignment').value;
+            const pictoSize = parseInt(document.getElementById('pictoSize').value);
+            let textX, pictoX;
+            
+            // Calcul des positions selon l'alignement
+            if (alignment === 'left') {
+                pictoX = 40;
+                textX = currentPicto ? pictoX + pictoSize + 30 : 40;
+            } else if (alignment === 'center') {
+                textX = width / 2;
+                pictoX = currentPicto ? textX - 200 : 0;
+            } else {
+                textX = width - 40;
+                pictoX = 40;
+            }
+            
+            // Dessiner le picto si présent
+            if (currentPicto) {
+                const img = new Image();
+                img.onload = function() {
+                    // Nettoyer et redessiner le fond
+                    if (isTransparent) {
+                        ctx.clearRect(0, 0, width, height);
+                    } else {
+                        ctx.fillStyle = document.getElementById('bgColor').value;
+                        ctx.fillRect(0, 0, width, height);
+                    }
+                    
+                    const aspectRatio = img.width / img.height;
+                    let drawWidth = pictoSize;
+                    let drawHeight = pictoSize;
+                    
+                    if (aspectRatio > 1) {
+                        drawHeight = pictoSize / aspectRatio;
+                    } else {
+                        drawWidth = pictoSize * aspectRatio;
+                    }
+                    
+                    const pictoY = height / 2 - drawHeight / 2;
+                    
+                    // Appliquer l'ombre au picto si nécessaire
+                    const shadowEffect = document.getElementById('shadowEffect').value;
+                    if (shadowEffect !== 'none') {
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                        switch(shadowEffect) {
+                            case 'light':
+                                ctx.shadowBlur = 3;
+                                ctx.shadowOffsetX = 1;
+                                ctx.shadowOffsetY = 1;
+                                break;
+                            case 'medium':
+                                ctx.shadowBlur = 5;
+                                ctx.shadowOffsetX = 2;
+                                ctx.shadowOffsetY = 2;
+                                break;
+                            case 'strong':
+                                ctx.shadowBlur = 8;
+                                ctx.shadowOffsetX = 3;
+                                ctx.shadowOffsetY = 3;
+                                break;
+                        }
+                    }
+                    
+                    ctx.drawImage(img, pictoX, pictoY, drawWidth, drawHeight);
+                    
+                    // Réinitialiser l'ombre après le picto
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    drawText(ctx, width, height, textX, alignment, height / 2);
+                };
+                img.src = currentPicto;
+            } else {
+                drawText(ctx, width, height, textX, alignment, height / 2);
+            }
+        }
+
+        async function drawMultipleSpeakers() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            const spacing = parseInt(document.getElementById('spacing').value);
+            const defaultHeight = parseInt(document.getElementById('canvasHeight').value);
+            
+            // Déterminer quels speakers afficher
+            const speakersToShow = [];
+            const startIndex = Math.floor(Math.max(0, currentSpeakerIndex) / speakersPerPage) * speakersPerPage;
+            
+            // Afficher les speakers sauvegardés ou en cours d'édition
+            for (let i = 0; i < speakersPerPage; i++) {
+                const speakerIndex = startIndex + i;
+                if (speakerIndex < speakers.length) {
+                    speakersToShow.push(speakers[speakerIndex]);
+                } else {
+                    // Si on est en mode édition, afficher le formulaire actuel pour le premier slot vide
+                    if (i === 0 && speakers.length === 0 && document.getElementById('civilite').value) {
+                        speakersToShow.push({
+                            civilite: document.getElementById('civilite').value || `Speaker ${i + 1}`,
+                            titre1: document.getElementById('titre1').value || 'Titre à définir',
+                            titre2: document.getElementById('titre2').value || '',
+                            picto: currentPicto,
+                            customHeight: defaultHeight
+                        });
+                    } else {
+                        speakersToShow.push({
+                            civilite: `Speaker ${speakerIndex + 1}`,
+                            titre1: 'Titre à définir',
+                            titre2: '',
+                            picto: null,
+                            customHeight: defaultHeight
+                        });
+                    }
+                }
+            }
+            
+            // Calculer la hauteur totale en tenant compte des hauteurs personnalisées
+            let totalHeight = 0;
+            speakersToShow.forEach((speaker, index) => {
+                const height = speaker.customHeight || defaultHeight;
+                totalHeight += parseInt(height);
+                if (index < speakersToShow.length - 1) {
+                    totalHeight += spacing;
+                }
+            });
+            
+            canvas.width = width;
+            canvas.height = totalHeight;
+            
+            // Fond
+            const isTransparent = document.getElementById('transparentBg').checked;
+            if (isTransparent) {
+                ctx.clearRect(0, 0, width, totalHeight);
+            } else {
+                ctx.fillStyle = document.getElementById('bgColor').value;
+                ctx.fillRect(0, 0, width, totalHeight);
+            }
+            
+            // Charger toutes les images en premier
+            const loadedImages = await Promise.all(
+                speakersToShow.map(speaker => {
+                    if (speaker.picto) {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => resolve(img);
+                            img.onerror = () => resolve(null);
+                            img.src = speaker.picto;
+                        });
+                    }
+                    return Promise.resolve(null);
+                })
+            );
+            
+            // Redessiner le fond après le chargement des images
+            if (isTransparent) {
+                ctx.clearRect(0, 0, width, totalHeight);
+            } else {
+                ctx.fillStyle = document.getElementById('bgColor').value;
+                ctx.fillRect(0, 0, width, totalHeight);
+            }
+            
+            // Dessiner chaque speaker avec son image chargée
+            const alignment = document.getElementById('alignment').value;
+            const pictoSize = parseInt(document.getElementById('pictoSize').value);
+            
+            let currentYOffset = 0;
+            
+            speakersToShow.forEach((speaker, index) => {
+                const speakerHeight = parseInt(speaker.customHeight || defaultHeight);
+                const centerY = currentYOffset + speakerHeight / 2;
+                
+                let textX, pictoX;
+                
+                // Calcul des positions selon l'alignement
+                if (alignment === 'left') {
+                    pictoX = 40;
+                    textX = loadedImages[index] ? pictoX + pictoSize + 30 : 40;
+                } else if (alignment === 'center') {
+                    textX = width / 2;
+                    pictoX = loadedImages[index] ? textX - 200 : 0;
+                } else {
+                    textX = width - 40;
+                    pictoX = 40;
+                }
+                
+                // Dessiner le picto si présent
+                if (loadedImages[index]) {
+                    const img = loadedImages[index];
+                    const aspectRatio = img.width / img.height;
+                    let drawWidth = pictoSize;
+                    let drawHeight = pictoSize;
+                    
+                    if (aspectRatio > 1) {
+                        drawHeight = pictoSize / aspectRatio;
+                    } else {
+                        drawWidth = pictoSize * aspectRatio;
+                    }
+                    
+                    const pictoY = centerY - drawHeight / 2;
+                    
+                    // Appliquer l'ombre au picto si nécessaire
+                    const shadowEffect = document.getElementById('shadowEffect').value;
+                    if (shadowEffect !== 'none') {
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                        switch(shadowEffect) {
+                            case 'light':
+                                ctx.shadowBlur = 3;
+                                ctx.shadowOffsetX = 1;
+                                ctx.shadowOffsetY = 1;
+                                break;
+                            case 'medium':
+                                ctx.shadowBlur = 5;
+                                ctx.shadowOffsetX = 2;
+                                ctx.shadowOffsetY = 2;
+                                break;
+                            case 'strong':
+                                ctx.shadowBlur = 8;
+                                ctx.shadowOffsetX = 3;
+                                ctx.shadowOffsetY = 3;
+                                break;
+                        }
+                    }
+                    
+                    ctx.drawImage(img, pictoX, pictoY, drawWidth, drawHeight);
+                    
+                    // Réinitialiser l'ombre après le picto
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                }
+                
+                // Dessiner le texte
+                drawTextForSpeaker(ctx, speaker, width, speakerHeight, textX, alignment, centerY);
+                
+                // Passer au prochain speaker
+                currentYOffset += speakerHeight;
+                if (index < speakersToShow.length - 1) {
+                    currentYOffset += spacing;
+                }
+            });
+        }
+
+        function drawTextForSpeaker(ctx, speaker, width, height, textX, alignment, centerY) {
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const titleSize = parseInt(document.getElementById('titleSize').value);
+            let fontFamily = document.getElementById('fontFamily').value;
+            let titleFontFamily = document.getElementById('titleFontFamily').value;
+            const shadowEffect = document.getElementById('shadowEffect').value;
+            
+            // Si une police personnalisée est chargée et sélectionnée pour le nom
+            if (fontFamily === customFontName && customFont) {
+                fontFamily = customFontName;
+            }
+            
+            // Si une police personnalisée est chargée et sélectionnée pour le titre
+            if (titleFontFamily === customTitleFontName && customTitleFont) {
+                titleFontFamily = customTitleFontName;
+            }
+            
+            // Appliquer l'ombre si nécessaire
+            if (shadowEffect !== 'none') {
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                switch(shadowEffect) {
+                    case 'light':
+                        ctx.shadowBlur = 3;
+                        ctx.shadowOffsetX = 1;
+                        ctx.shadowOffsetY = 1;
+                        break;
+                    case 'medium':
+                        ctx.shadowBlur = 5;
+                        ctx.shadowOffsetX = 2;
+                        ctx.shadowOffsetY = 2;
+                        break;
+                    case 'strong':
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+                        break;
+                }
+            }
+            
+            ctx.textAlign = alignment === 'center' ? 'center' : alignment;
+            ctx.textBaseline = 'middle';
+            
+            // Calcul de la position verticale
+            let totalHeight = fontSize + titleSize * 1.3;
+            if (speaker.titre2) totalHeight += titleSize * 1.3;
+            let currentY = centerY - totalHeight / 2;
+            
+            // Nom - utiliser la police personnalisée pour le nom si disponible
+            ctx.font = `700 ${fontSize}px "${fontFamily}"`;
+            ctx.fillStyle = document.getElementById('nameColor').value;
+            ctx.fillText(speaker.civilite, textX, currentY + fontSize / 2);
+            currentY += fontSize + 10;
+            
+            // Titre ligne 1 - utiliser la police personnalisée pour le titre si disponible
+            ctx.font = `400 ${titleSize}px "${titleFontFamily}"`;
+            ctx.fillStyle = document.getElementById('titleColor').value;
+            ctx.fillText(speaker.titre1, textX, currentY + titleSize / 2);
+            
+            // Titre ligne 2 si présent
+            if (speaker.titre2) {
+                currentY += titleSize * 1.3;
+                ctx.fillText(speaker.titre2, textX, currentY + titleSize / 2);
+            }
+            
+            // Réinitialiser l'ombre
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        function drawText(ctx, width, height, textX, alignment, centerY) {
+            const civilite = document.getElementById('civilite').value || 'Nom du Speaker';
+            const titre1 = document.getElementById('titre1').value || 'Titre / Fonction';
+            const titre2 = document.getElementById('titre2').value;
+            
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const titleSize = parseInt(document.getElementById('titleSize').value);
+            let fontFamily = document.getElementById('fontFamily').value;
+            let titleFontFamily = document.getElementById('titleFontFamily').value;
+            const shadowEffect = document.getElementById('shadowEffect').value;
+            
+            // Si une police personnalisée est chargée et sélectionnée pour le nom
+            if (fontFamily === customFontName && customFont) {
+                fontFamily = customFontName;
+            }
+            
+            // Si une police personnalisée est chargée et sélectionnée pour le titre
+            if (titleFontFamily === customTitleFontName && customTitleFont) {
+                titleFontFamily = customTitleFontName;
+            }
+            
+            // Appliquer l'ombre si nécessaire (pour meilleure lisibilité sur LED)
+            if (shadowEffect !== 'none') {
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                switch(shadowEffect) {
+                    case 'light':
+                        ctx.shadowBlur = 3;
+                        ctx.shadowOffsetX = 1;
+                        ctx.shadowOffsetY = 1;
+                        break;
+                    case 'medium':
+                        ctx.shadowBlur = 5;
+                        ctx.shadowOffsetX = 2;
+                        ctx.shadowOffsetY = 2;
+                        break;
+                    case 'strong':
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+                        break;
+                }
+            }
+            
+            ctx.textAlign = alignment === 'center' ? 'center' : alignment;
+            ctx.textBaseline = 'middle';
+            
+            // Calcul de la position verticale
+            let totalHeight = fontSize + titleSize * 1.3;
+            if (titre2) totalHeight += titleSize * 1.3;
+            let currentY = centerY - totalHeight / 2;
+            
+            // Nom - utiliser la police personnalisée pour le nom si disponible
+            ctx.font = `700 ${fontSize}px "${fontFamily}"`;
+            ctx.fillStyle = document.getElementById('nameColor').value;
+            ctx.fillText(civilite, textX, currentY + fontSize / 2);
+            currentY += fontSize + 10;
+            
+            // Titre ligne 1 - utiliser la police personnalisée pour le titre si disponible
+            ctx.font = `400 ${titleSize}px "${titleFontFamily}"`;
+            ctx.fillStyle = document.getElementById('titleColor').value;
+            ctx.fillText(titre1, textX, currentY + titleSize / 2);
+            
+            // Titre ligne 2 si présent
+            if (titre2) {
+                currentY += titleSize * 1.3;
+                ctx.fillText(titre2, textX, currentY + titleSize / 2);
+            }
+            
+            // Réinitialiser l'ombre
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        function addSpeaker() {
+            const civilite = document.getElementById('civilite').value;
+            const titre1 = document.getElementById('titre1').value;
+            
+            if (!civilite || !titre1) {
+                alert('Veuillez remplir au minimum le nom et le titre principal');
+                return;
+            }
+            
+            const speaker = {
+                civilite: civilite,
+                titre1: titre1,
+                titre2: document.getElementById('titre2').value,
+                picto: currentPicto,
+                settings: {
+                    fontSize: document.getElementById('fontSize').value,
+                    titleSize: document.getElementById('titleSize').value,
+                    fontFamily: document.getElementById('fontFamily').value,
+                    titleFontFamily: document.getElementById('titleFontFamily').value,
+                    nameColor: document.getElementById('nameColor').value,
+                    titleColor: document.getElementById('titleColor').value,
+                    bgColor: document.getElementById('bgColor').value,
+                    transparentBg: document.getElementById('transparentBg').checked,
+                    alignment: document.getElementById('alignment').value,
+                    pictoSize: document.getElementById('pictoSize').value,
+                    shadowEffect: document.getElementById('shadowEffect').value,
+                    canvasWidth: document.getElementById('canvasWidth').value,
+                    canvasHeight: document.getElementById('canvasHeight').value,
+                    speakersPerPage: document.getElementById('speakersPerPage').value,
+                    spacing: document.getElementById('spacing').value
+                }
+            };
+            
+            speakers.push(speaker);
+            updateSpeakersList();
+            updateMultiSpeakerEdit();
+            clearForm();
+            
+            // Afficher le dernier speaker ajouté
+            currentSpeakerIndex = speakers.length - 1;
+            displaySpeaker(currentSpeakerIndex);
+        }
+
+        function updateSpeakersList() {
+            const listContainer = document.getElementById('speakersList');
+            
+            if (speakers.length === 0) {
+                listContainer.innerHTML = `
+                    <h3 class="form-title">📋 Liste des speakers</h3>
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        <p>Aucun speaker ajouté</p>
+                        <small>Remplissez le formulaire et cliquez sur "Ajouter"</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<h3 class="form-title">📋 Liste des speakers (' + speakers.length + ')</h3>';
+            
+            speakers.forEach((speaker, index) => {
+                const isActive = index === currentSpeakerIndex;
+                html += `
+                    <div class="speaker-item ${isActive ? 'active' : ''}" onclick="displaySpeaker(${index})">
+                        <div class="speaker-info">
+                            <div class="speaker-name">${speaker.civilite}</div>
+                            <div class="speaker-title">${speaker.titre1}</div>
+                        </div>
+                        <div class="speaker-actions">
+                            <button class="btn-icon" onclick="event.stopPropagation(); deleteSpeaker(${index})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            listContainer.innerHTML = html;
+        }
+
+        function displaySpeaker(index) {
+            if (index < 0 || index >= speakers.length) return;
+            
+            currentSpeakerIndex = index;
+            const speaker = speakers[index];
+            
+            // Restaurer les paramètres
+            currentPicto = speaker.picto;
+            if (currentPicto) {
+                document.getElementById('pictoPreview').innerHTML = `<img src="${currentPicto}" alt="Picto">`;
+            }
+            
+            // Appliquer les paramètres
+            Object.keys(speaker.settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (key === 'transparentBg') {
+                        element.checked = speaker.settings[key];
+                        // Mettre à jour l'état des champs de couleur de fond
+                        document.getElementById('bgColor').disabled = speaker.settings[key];
+                        document.getElementById('bgColorText').disabled = speaker.settings[key];
+                    } else {
+                        element.value = speaker.settings[key];
+                    }
+                }
+            });
+            
+            // Mettre à jour les champs de texte
+            document.getElementById('civilite').value = speaker.civilite;
+            document.getElementById('titre1').value = speaker.titre1;
+            document.getElementById('titre2').value = speaker.titre2 || '';
+            
+            updateMultiSpeakerEdit();
+            updatePreview();
+            updateSpeakersList();
+        }
+
+        function deleteSpeaker(index) {
+            if (confirm('Supprimer ce speaker ?')) {
+                speakers.splice(index, 1);
+                if (currentSpeakerIndex >= speakers.length) {
+                    currentSpeakerIndex = speakers.length - 1;
+                }
+                if (currentSpeakerIndex >= 0) {
+                    displaySpeaker(currentSpeakerIndex);
+                } else {
+                    clearForm();
+                }
+                updateSpeakersList();
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('civilite').value = '';
+            document.getElementById('titre1').value = '';
+            document.getElementById('titre2').value = '';
+            document.getElementById('pictoInput').value = '';
+            
+            // Réinitialiser au picto par défaut s'il existe, sinon vide
+            if (defaultPicto) {
+                currentPicto = defaultPicto;
+                document.getElementById('pictoPreview').innerHTML = `<img src="${defaultPicto}" alt="Picto">`;
+            } else {
+                currentPicto = null;
+                document.getElementById('pictoPreview').innerHTML = '<span style="color: #ccc;">📷</span>';
+            }
+            
+            updatePreview();
+        }
+
+        function downloadCurrent() {
+            const canvas = document.getElementById('canvas');
+            canvas.toBlob(blob => {
+                const fileName = currentSpeakerIndex >= 0 
+                    ? `speaker-${speakers[currentSpeakerIndex].civilite.replace(/\s+/g, '-')}.png`
+                    : 'speaker-card.png';
+                saveAs(blob, fileName);
+            });
+        }
+
+        async function downloadAll() {
+            if (speakers.length === 0) {
+                alert('Aucun speaker à télécharger');
+                return;
+            }
+            
+            const zip = new JSZip();
+            const originalSpeakersPerPage = document.getElementById('speakersPerPage').value;
+            
+            // Forcer le mode single pour l'export individuel
+            document.getElementById('speakersPerPage').value = '1';
+            
+            for (let i = 0; i < speakers.length; i++) {
+                displaySpeaker(i);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const canvas = document.getElementById('canvas');
+                await new Promise(resolve => {
+                    canvas.toBlob(blob => {
+                        const fileName = `${i + 1}-${speakers[i].civilite.replace(/\s+/g, '-')}.png`;
+                        zip.file(fileName, blob);
+                        resolve();
+                    });
+                });
+            }
+            
+            // Restaurer le mode original
+            document.getElementById('speakersPerPage').value = originalSpeakersPerPage;
+            updatePreview();
+            
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, 'speakers-cards.zip');
+        }
+
+        async function downloadGrouped() {
+            if (speakers.length === 0) {
+                alert('Aucun speaker à télécharger');
+                return;
+            }
+            
+            const speakersPerPage = parseInt(document.getElementById('speakersPerPage').value);
+            
+            if (speakersPerPage === 1) {
+                alert('Utilisez "Télécharger tout" pour les cartes individuelles');
+                return;
+            }
+            
+            const zip = new JSZip();
+            const totalPages = Math.ceil(speakers.length / speakersPerPage);
+            
+            for (let page = 0; page < totalPages; page++) {
+                // Définir l'index de départ pour cette page
+                currentSpeakerIndex = page * speakersPerPage;
+                await drawMultipleSpeakers(); // Attendre que le dessin soit terminé
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                const canvas = document.getElementById('canvas');
+                await new Promise(resolve => {
+                    canvas.toBlob(blob => {
+                        const fileName = `groupe-${page + 1}.png`;
+                        zip.file(fileName, blob);
+                        resolve();
+                    });
+                });
+            }
+            
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `speakers-groupes-par-${speakersPerPage}.zip`);
+        }
+
+        // Initialisation
+        updatePreview();
+    </script>
+</body>
+</html>
